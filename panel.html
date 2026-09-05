@@ -669,6 +669,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        flex-wrap: wrap;
     }
 
     .user-card-avatar {
@@ -727,6 +728,8 @@
         align-items: center;
         gap: 8px;
         flex-shrink: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .user-role-badge {
@@ -762,6 +765,179 @@
     .user-role-badge.role-student {
         background: #fff3e0;
         color: #e65100;
+    }
+
+    .user-role-badge.role-parent {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .verify-status-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .verify-status-badge.yes {
+        background: #eafaf0;
+        color: #1e8449;
+        border: 1px solid #1e8449;
+    }
+
+    .verify-status-badge.no {
+        background: #fdecea;
+        color: #c0392b;
+        border: 1px solid #c0392b;
+    }
+
+    .btn-ban {
+        background: #fff;
+        color: #c62828;
+        border: 1px solid #c62828;
+        border-radius: 20px;
+        padding: 7px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-ban:hover {
+        background: #ffebee;
+    }
+
+    .btn-unban {
+        background: #145A32;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 7px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-unban:hover {
+        background: #0d3d22;
+    }
+
+    .verification-banned-section {
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    .verification-banned-heading {
+        font-size: 15px;
+        color: #333;
+        margin-bottom: 14px;
+    }
+
+    .banned-card {
+        background: #fff;
+        border: 1px solid #f5c6c6;
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .banned-card-info {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .banned-card-email {
+        font-weight: 600;
+        font-size: 14px;
+        color: #222;
+    }
+
+    .banned-card-meta {
+        font-size: 11px;
+        color: #aaa;
+        margin-top: 2px;
+    }
+
+    .banned-card-reason {
+        font-size: 12px;
+        color: #c62828;
+        margin-top: 6px;
+    }
+
+    .ban-modal-target {
+        font-weight: 600;
+        color: #222;
+        margin-bottom: 4px;
+    }
+
+    .ban-modal-note {
+        font-size: 12px;
+        color: #888;
+        line-height: 1.5;
+        margin-bottom: 14px;
+    }
+
+    .ban-modal-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 6px;
+    }
+
+    .ban-reason-input {
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-family: inherit;
+        font-size: 13px;
+        resize: vertical;
+        box-sizing: border-box;
+    }
+
+    .ban-reason-input:focus {
+        border-color: #145A32;
+        outline: none;
+    }
+
+    .ban-modal-error {
+        color: #c62828;
+        font-size: 12px;
+        min-height: 16px;
+        margin: 8px 0 0;
+    }
+
+    .ban-modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 14px;
+    }
+
+    .btn-neutral {
+        background: #fff;
+        color: #555;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        padding: 8px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+    }
+
+    .btn-neutral:hover {
+        background: #f5f5f5;
     }
 
     /* ---- Products view ---- */
@@ -1083,6 +1259,7 @@
     <button type="button" class="view-tab" data-view="products" onclick="setView('products')">Products</button>
     <button type="button" class="view-tab" data-view="refunds" onclick="setView('refunds')">Request Refund</button>
     <button type="button" class="view-tab" data-view="users" id="usersTabBtn" style="display:none;" onclick="setView('users')">Users</button>
+    <button type="button" class="view-tab" data-view="verification" id="verificationTabBtn" style="display:none;" onclick="setView('verification')">Verification</button>
 </div>
 
 <div class="filters" id="ordersFilters">
@@ -1112,6 +1289,17 @@
     <div id="usersList"></div>
 </div>
 
+<div class="container" id="verificationContainer" style="display:none;">
+    <div class="users-search-wrap">
+        <input type="text" id="verificationSearchInput" class="users-search-input" placeholder="Search verified users by name, username, or email…" oninput="handleVerificationSearch(this.value)">
+    </div>
+    <div id="verificationList"></div>
+    <div class="verification-banned-section">
+        <h3 class="verification-banned-heading">Suspended / Banned Emails</h3>
+        <div id="bannedList"></div>
+    </div>
+</div>
+
 </div>
 
 <div class="img-overlay" id="imgOverlay" onclick="closeImgOverlay()">
@@ -1126,6 +1314,24 @@
         </div>
         <button type="button" class="btn-approve" onclick="generateReferral()">Generate New Referral Code</button>
         <div id="referralList" class="referral-list"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="banModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Remove &amp; Ban Account</h3>
+            <button type="button" class="modal-close" onclick="closeBanModal()">&times;</button>
+        </div>
+        <p class="ban-modal-target" id="banModalTarget"></p>
+        <p class="ban-modal-note">This removes their account and permanently blocks this email from signing up again — unless you unban it from the Suspended / Banned Emails list below.</p>
+        <label class="ban-modal-label" for="banReasonInput">Reason (shown to the user)</label>
+        <textarea id="banReasonInput" class="ban-reason-input" rows="3" placeholder="e.g. You violated the verification requirement (used someone else's ID / fake ID)."></textarea>
+        <p class="ban-modal-error" id="banModalError"></p>
+        <div class="ban-modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeBanModal()">Cancel</button>
+            <button type="button" class="btn-decline" onclick="confirmBanAccount()">Remove &amp; Ban</button>
+        </div>
     </div>
 </div>
 
@@ -1166,6 +1372,7 @@
     // registered shop account.
     var USERS_DOC = db.collection("athletica").doc("orderManageAccounts");
     var REFERRALS_DOC = db.collection("athletica").doc("referrals");
+    var BANNED_DOC = db.collection("athletica").doc("bannedAccounts");
     var OWNER_EMAIL = "owner@athletica.com";
 
     var usersMap = {};
@@ -1206,7 +1413,7 @@
     }
 
     function setView(view) {
-        if (view === "users" && (!currentUser || currentUser.role !== "owner")) return;
+        if ((view === "users" || view === "verification") && (!currentUser || currentUser.role !== "owner")) return;
 
         currentView = view;
         document.querySelectorAll(".view-tab").forEach(function (b) {
@@ -1217,9 +1424,11 @@
         document.getElementById("productsContainer").style.display = view === "products" ? "block" : "none";
         document.getElementById("refundsContainer").style.display = view === "refunds" ? "block" : "none";
         document.getElementById("usersContainer").style.display = view === "users" ? "block" : "none";
+        document.getElementById("verificationContainer").style.display = view === "verification" ? "block" : "none";
         if (view === "products") renderProducts();
         if (view === "refunds") renderRefunds();
         if (view === "users") renderUsers();
+        if (view === "verification") renderVerification();
     }
 
     var usersSearchQuery = "";
@@ -1283,6 +1492,162 @@
                 '</div>' +
             '</div>';
         }).join("");
+    }
+
+    var verificationSearchQuery = "";
+
+    function handleVerificationSearch(val) {
+        verificationSearchQuery = (val || "").trim().toLowerCase();
+        renderVerification();
+    }
+
+    function isBannedEmail(email) {
+        email = (email || "").toLowerCase();
+        return bannedAccounts.some(function (b) { return (b.email || "").toLowerCase() === email; });
+    }
+
+    function renderVerification() {
+        var listEl = document.getElementById("verificationList");
+        var bannedEl = document.getElementById("bannedList");
+        if (!listEl || !bannedEl) return;
+
+        // Active (non-banned) users — this is the "who has verified" view.
+        var entries = siteUsers.filter(function (u) {
+            var isOwner = u.isOwner || u.email === OWNER_EMAIL;
+            return !isOwner && !isBannedEmail(u.email);
+        });
+
+        if (verificationSearchQuery) {
+            entries = entries.filter(function (u) {
+                var name = (u.name || "").toLowerCase();
+                var username = (u.username || "").toLowerCase();
+                var email = (u.email || "").toLowerCase();
+                return name.indexOf(verificationSearchQuery) !== -1 ||
+                    username.indexOf(verificationSearchQuery) !== -1 ||
+                    email.indexOf(verificationSearchQuery) !== -1;
+            });
+        }
+
+        if (entries.length === 0) {
+            listEl.innerHTML = '<div class="empty-state">No users found.</div>';
+        } else {
+            listEl.innerHTML = entries.map(function (u) {
+                var name = u.name || u.username || u.email || "User";
+                var initial = name.charAt(0).toUpperCase();
+                var avatarHtml = u.avatar
+                    ? '<img src="' + escapeHtml(u.avatar) + '" class="user-card-avatar-img" alt="">'
+                    : '<div class="user-card-avatar">' + escapeHtml(initial) + '</div>';
+
+                var isSeller = usersMap[u.email] && usersMap[u.email].role === "seller";
+                var siteRole = (u.role || "").toLowerCase();
+                var roleClass = isSeller ? "seller" : (siteRole || "customer");
+                var roleLabel = isSeller ? "Seller" : (u.role || "Customer");
+
+                var verifiedHtml = u.idVerified
+                    ? '<span class="verify-status-badge yes"><i class="fa-solid fa-circle-check"></i> Verified</span>'
+                    : '<span class="verify-status-badge no"><i class="fa-solid fa-circle-xmark"></i> Not Verified</span>';
+
+                return '<div class="user-card">' +
+                    avatarHtml +
+                    '<div class="user-card-info">' +
+                        '<div class="user-card-name">' + escapeHtml(name) + '</div>' +
+                        (u.username ? '<div class="user-card-username">' + escapeHtml(u.username) + '</div>' : '') +
+                        (u.email ? '<div class="user-card-meta">' + escapeHtml(u.email) + '</div>' : '') +
+                    '</div>' +
+                    '<div class="user-card-right">' +
+                        '<span class="user-role-badge role-' + roleClass + '">' + roleLabel + '</span>' +
+                        verifiedHtml +
+                        '<button type="button" class="btn-ban" onclick="openBanModal(\'' + escapeHtml(u.email || "") + '\', \'' + escapeHtml(name) + '\')">Remove &amp; Ban</button>' +
+                    '</div>' +
+                '</div>';
+            }).join("");
+        }
+
+        if (bannedAccounts.length === 0) {
+            bannedEl.innerHTML = '<div class="empty-state">No banned/suspended emails.</div>';
+            return;
+        }
+
+        var bannedSorted = bannedAccounts.slice().reverse();
+        bannedEl.innerHTML = bannedSorted.map(function (b) {
+            var when = b.bannedAt ? new Date(b.bannedAt).toLocaleString() : "";
+            return '<div class="banned-card">' +
+                '<div class="banned-card-info">' +
+                    '<div class="banned-card-email">' + escapeHtml(b.email || "") +
+                        (b.name ? ' <span class="user-card-meta">(' + escapeHtml(b.name) + ')</span>' : '') +
+                    '</div>' +
+                    (when ? '<div class="banned-card-meta">Banned ' + escapeHtml(when) + (b.bannedBy ? ' by ' + escapeHtml(b.bannedBy) : '') + '</div>' : '') +
+                    (b.reason ? '<div class="banned-card-reason">Reason: ' + escapeHtml(b.reason) + '</div>' : '') +
+                '</div>' +
+                '<button type="button" class="btn-unban" onclick="unbanEmail(\'' + escapeHtml(b.email || "") + '\')">Unban</button>' +
+            '</div>';
+        }).join("");
+    }
+
+    var _banTargetEmail = "";
+
+    function openBanModal(email, name) {
+        _banTargetEmail = email;
+        document.getElementById("banModalTarget").textContent = name ? (name + " — " + email) : email;
+        document.getElementById("banReasonInput").value = "";
+        document.getElementById("banModalError").textContent = "";
+        document.getElementById("banModal").classList.add("show");
+    }
+
+    function closeBanModal() {
+        document.getElementById("banModal").classList.remove("show");
+        _banTargetEmail = "";
+    }
+
+    function confirmBanAccount() {
+        var reason = document.getElementById("banReasonInput").value.trim();
+        var errorEl = document.getElementById("banModalError");
+
+        if (!_banTargetEmail) {
+            closeBanModal();
+            return;
+        }
+        if (!reason) {
+            errorEl.textContent = "Please enter a reason — this will be shown to the user.";
+            return;
+        }
+        if (isBannedEmail(_banTargetEmail)) {
+            errorEl.textContent = "This email is already banned.";
+            return;
+        }
+
+        var target = siteUsers.find(function (u) { return u.email === _banTargetEmail; });
+
+        var entry = {
+            email: _banTargetEmail,
+            reason: reason,
+            name: target ? (target.name || "") : "",
+            bannedAt: new Date().toISOString(),
+            bannedBy: currentUser ? currentUser.email : ""
+        };
+
+        var updated = bannedAccounts.concat([entry]);
+
+        BANNED_DOC.set({ list: updated }).then(function () {
+            closeBanModal();
+            showToast("Account removed & banned.");
+        }).catch(function (err) {
+            console.error("ban error", err);
+            errorEl.textContent = "Couldn't save the ban right now. Please try again.";
+        });
+    }
+
+    function unbanEmail(email) {
+        if (!confirm("Unban " + email + "? They will be able to sign up again.")) return;
+
+        var updated = bannedAccounts.filter(function (b) { return (b.email || "").toLowerCase() !== (email || "").toLowerCase(); });
+
+        BANNED_DOC.set({ list: updated }).then(function () {
+            showToast("Email unbanned.");
+        }).catch(function (err) {
+            console.error("unban error", err);
+            showToast("Couldn't unban right now. Please try again.");
+        });
     }
 
     function starsHtmlOM(avg) {
@@ -1670,7 +2035,21 @@
         _siteUsersReady = true;
         restoreSession();
         if (currentUser && currentUser.role === "owner" && currentView === "users") renderUsers();
+        if (currentUser && currentUser.role === "owner" && currentView === "verification") renderVerification();
     }, function (err) { console.error("site users sync error", err); });
+
+    // Owner-managed list of banned/suspended emails — { list: [ { email,
+    // reason, name, bannedAt, bannedBy } ] }. This one IS writable from
+    // the panel (unlike athletica/users above), since banning only adds
+    // an entry here rather than mutating the shared user list.
+    var bannedAccounts = [];
+    var _bannedAccountsReady = false;
+
+    BANNED_DOC.onSnapshot(function (doc) {
+        bannedAccounts = (doc.exists && doc.data().list) ? doc.data().list : [];
+        _bannedAccountsReady = true;
+        if (currentUser && currentUser.role === "owner" && currentView === "verification") renderVerification();
+    }, function (err) { console.error("bannedAccounts sync error", err); });
 
     // ---- Auth logic ----
 
@@ -1861,7 +2240,8 @@
         document.getElementById("userChip").textContent = currentUser.name + " (" + currentUser.role + ")";
         document.getElementById("referralsBtn").style.display = currentUser.role === "owner" ? "inline-block" : "none";
         document.getElementById("usersTabBtn").style.display = currentUser.role === "owner" ? "inline-block" : "none";
-        if (currentUser.role !== "owner" && currentView === "users") setView("orders");
+        document.getElementById("verificationTabBtn").style.display = currentUser.role === "owner" ? "inline-block" : "none";
+        if (currentUser.role !== "owner" && (currentView === "users" || currentView === "verification")) setView("orders");
         renderOrders();
     }
 
