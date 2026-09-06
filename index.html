@@ -555,6 +555,45 @@
         color: #888;
     }
 
+    .referral-generate-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .referral-generate-row select {
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-family: inherit;
+        font-size: 13px;
+        background: #fff;
+    }
+
+    .referral-generate-row .btn-approve {
+        flex: 1;
+    }
+
+    .referral-role-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .referral-role-badge.role-admin {
+        background: #ede7f6;
+        color: #5e35b1;
+        border: 1px solid #5e35b1;
+    }
+
+    .referral-role-badge.role-seller {
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 1px solid #1565c0;
+    }
+
     .referral-list {
         margin-top: 16px;
         display: flex;
@@ -772,6 +811,11 @@
         color: #7b1fa2;
     }
 
+    .user-role-badge.role-admin {
+        background: #ede7f6;
+        color: #5e35b1;
+    }
+
     .verify-status-badge {
         font-size: 11px;
         font-weight: 600;
@@ -807,6 +851,23 @@
 
     .btn-ban:hover {
         background: #ffebee;
+    }
+
+    .btn-view-photo {
+        background: #fff;
+        color: #145A32;
+        border: 1px solid #145A32;
+        border-radius: 20px;
+        padding: 7px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-view-photo:hover {
+        background: #eafaf0;
     }
 
     .btn-unban {
@@ -938,6 +999,66 @@
 
     .btn-neutral:hover {
         background: #f5f5f5;
+    }
+
+    .btn-view-id {
+        background: #fff;
+        color: #145A32;
+        border: 1px solid #145A32;
+        border-radius: 20px;
+        padding: 7px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-view-id:hover {
+        background: #eafaf0;
+    }
+
+    .id-photos-modal-box {
+        max-width: 640px;
+    }
+
+    .id-photos-loading,
+    .id-photos-empty {
+        color: #888;
+        font-size: 13px;
+        padding: 20px 0;
+        text-align: center;
+    }
+
+    .id-photos-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .id-photos-item h4 {
+        font-size: 12px;
+        color: #555;
+        margin: 0 0 6px;
+    }
+
+    .id-photos-item img {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        display: block;
+    }
+
+    .id-photos-meta {
+        font-size: 11px;
+        color: #999;
+        margin-top: 12px;
+    }
+
+    @media (max-width: 480px) {
+        .id-photos-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     /* ---- Products view ---- */
@@ -1309,10 +1430,16 @@
 <div class="modal-overlay" id="referralModal">
     <div class="modal-box">
         <div class="modal-head">
-            <h3>Seller Referral Codes</h3>
+            <h3>Referral Codes</h3>
             <button type="button" class="modal-close" onclick="closeReferralModal()">&times;</button>
         </div>
-        <button type="button" class="btn-approve" onclick="generateReferral()">Generate New Referral Code</button>
+        <div class="referral-generate-row">
+            <select id="referralRoleSelect">
+                <option value="seller">Seller</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button type="button" class="btn-approve" onclick="generateReferral()">Generate New Referral Code</button>
+        </div>
         <div id="referralList" class="referral-list"></div>
     </div>
 </div>
@@ -1331,6 +1458,18 @@
         <div class="ban-modal-actions">
             <button type="button" class="btn-cancel" onclick="closeBanModal()">Cancel</button>
             <button type="button" class="btn-decline" onclick="confirmBanAccount()">Remove &amp; Ban</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="idPhotosModal">
+    <div class="modal-box id-photos-modal-box">
+        <div class="modal-head">
+            <h3 id="idPhotosModalTitle">Submitted ID</h3>
+            <button type="button" class="modal-close" onclick="closeIdPhotosModal()">&times;</button>
+        </div>
+        <div id="idPhotosModalBody">
+            <p class="id-photos-loading">Loading…</p>
         </div>
     </div>
 </div>
@@ -1413,7 +1552,7 @@
     }
 
     function setView(view) {
-        if ((view === "users" || view === "verification") && (!currentUser || currentUser.role !== "owner")) return;
+        if ((view === "users" || view === "verification") && (!currentUser || (currentUser.role !== "owner" && currentUser.role !== "admin"))) return;
 
         currentView = view;
         document.querySelectorAll(".view-tab").forEach(function (b) {
@@ -1471,11 +1610,12 @@
 
             var isOwner = u.isOwner || u.email === OWNER_EMAIL;
             var isSeller = !isOwner && usersMap[u.email] && usersMap[u.email].role === "seller";
+            var isAdmin = !isOwner && !isSeller && usersMap[u.email] && usersMap[u.email].role === "admin";
             var siteRole = (u.role || "").toLowerCase();
-            var roleClass = isOwner ? "owner" : (isSeller ? "seller" : (siteRole || "customer"));
-            var roleLabel = isOwner ? "Owner" : (isSeller ? "Seller" : (u.role || "Customer"));
+            var roleClass = isOwner ? "owner" : (isSeller ? "seller" : (isAdmin ? "admin" : (siteRole || "customer")));
+            var roleLabel = isOwner ? "Owner" : (isSeller ? "Seller" : (isAdmin ? "Admin" : (u.role || "Customer")));
 
-            var studentIdHtml = (!isOwner && !isSeller && siteRole === "student" && u.studentId)
+            var studentIdHtml = (!isOwner && !isSeller && !isAdmin && siteRole === "student" && u.studentId)
                 ? '<div class="user-card-meta">Student ID: ' + escapeHtml(u.studentId) + '</div>'
                 : '';
 
@@ -1504,6 +1644,29 @@
     function isBannedEmail(email) {
         email = (email || "").toLowerCase();
         return bannedAccounts.some(function (b) { return (b.email || "").toLowerCase() === email; });
+    }
+
+    function viewVerificationPhoto(email, kind) {
+        if (!email) return;
+        showToast("Loading photo...");
+        db.collection("athletica").doc("idPhotosRoot").collection("byEmail").doc(email).get()
+            .then(function (doc) {
+                if (!doc.exists) {
+                    showToast("No photo on file for this user.");
+                    return;
+                }
+                var data = doc.data();
+                var src = data[kind];
+                if (!src) {
+                    showToast("No " + (kind === "idImage" ? "ID" : "selfie") + " photo on file for this user.");
+                    return;
+                }
+                openImgOverlay(src);
+            })
+            .catch(function (err) {
+                console.error("view verification photo error", err);
+                showToast("Couldn't load the photo right now.");
+            });
     }
 
     function renderVerification() {
@@ -1539,9 +1702,10 @@
                     : '<div class="user-card-avatar">' + escapeHtml(initial) + '</div>';
 
                 var isSeller = usersMap[u.email] && usersMap[u.email].role === "seller";
+                var isAdmin = !isSeller && usersMap[u.email] && usersMap[u.email].role === "admin";
                 var siteRole = (u.role || "").toLowerCase();
-                var roleClass = isSeller ? "seller" : (siteRole || "customer");
-                var roleLabel = isSeller ? "Seller" : (u.role || "Customer");
+                var roleClass = isSeller ? "seller" : (isAdmin ? "admin" : (siteRole || "customer"));
+                var roleLabel = isSeller ? "Seller" : (isAdmin ? "Admin" : (u.role || "Customer"));
 
                 var verifiedHtml = u.idVerified
                     ? '<span class="verify-status-badge yes"><i class="fa-solid fa-circle-check"></i> Verified</span>'
@@ -1557,6 +1721,8 @@
                     '<div class="user-card-right">' +
                         '<span class="user-role-badge role-' + roleClass + '">' + roleLabel + '</span>' +
                         verifiedHtml +
+                        '<button type="button" class="btn-view-photo" onclick="viewVerificationPhoto(\'' + escapeHtml(u.email || "") + '\', \'idImage\')">View ID</button>' +
+                        '<button type="button" class="btn-view-photo" onclick="viewVerificationPhoto(\'' + escapeHtml(u.email || "") + '\', \'selfieImage\')">View Selfie</button>' +
                         '<button type="button" class="btn-ban" onclick="openBanModal(\'' + escapeHtml(u.email || "") + '\', \'' + escapeHtml(name) + '\')">Remove &amp; Ban</button>' +
                     '</div>' +
                 '</div>';
@@ -2034,8 +2200,8 @@
         siteUsers = (doc.exists && doc.data().list) ? doc.data().list : [];
         _siteUsersReady = true;
         restoreSession();
-        if (currentUser && currentUser.role === "owner" && currentView === "users") renderUsers();
-        if (currentUser && currentUser.role === "owner" && currentView === "verification") renderVerification();
+        if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "users") renderUsers();
+        if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "verification") renderVerification();
     }, function (err) { console.error("site users sync error", err); });
 
     // Owner-managed list of banned/suspended emails — { list: [ { email,
@@ -2048,7 +2214,7 @@
     BANNED_DOC.onSnapshot(function (doc) {
         bannedAccounts = (doc.exists && doc.data().list) ? doc.data().list : [];
         _bannedAccountsReady = true;
-        if (currentUser && currentUser.role === "owner" && currentView === "verification") renderVerification();
+        if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "verification") renderVerification();
     }, function (err) { console.error("bannedAccounts sync error", err); });
 
     // ---- Auth logic ----
@@ -2063,7 +2229,7 @@
         usersMap = (doc.exists && doc.data().map) ? doc.data().map : {};
         _usersMapReady = true;
         restoreSession();
-        if (currentUser && currentUser.role === "owner" && currentView === "users") renderUsers();
+        if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "users") renderUsers();
     }, function (err) { console.error("users sync error", err); });
 
     REFERRALS_DOC.onSnapshot(function (doc) {
@@ -2098,7 +2264,7 @@
         document.getElementById("referralForm").style.display = "flex";
         document.getElementById("backToShopLink").style.display = "none";
         document.getElementById("authSubtitle").textContent =
-            "Hi " + (siteUser.name || siteUser.username || siteUser.email) + "! Enter your seller referral code to continue.";
+            "Hi " + (siteUser.name || siteUser.username || siteUser.email) + "! Enter your referral code to continue.";
         document.getElementById("referralError").textContent = "";
         document.getElementById("referralCodeInput").focus();
     }
@@ -2170,8 +2336,10 @@
         ref.usedAt = Date.now();
         saveReferrals();
 
+        var grantedRole = (ref.role === "admin") ? "admin" : "seller";
+
         usersMap[pendingSiteUser.email] = {
-            role: "seller",
+            role: grantedRole,
             name: pendingSiteUser.name || pendingSiteUser.username || pendingSiteUser.email,
             username: pendingSiteUser.username || "",
             referralCode: code,
@@ -2181,7 +2349,7 @@
 
         var siteUser = pendingSiteUser;
         pendingSiteUser = null;
-        loginAs(siteUser, "seller");
+        loginAs(siteUser, grantedRole);
         return false;
     }
 
@@ -2238,10 +2406,11 @@
         document.getElementById("authOverlay").classList.add("hidden");
         document.getElementById("appRoot").style.display = "block";
         document.getElementById("userChip").textContent = currentUser.name + " (" + currentUser.role + ")";
+        var isAdminOrOwner = (currentUser.role === "owner" || currentUser.role === "admin");
         document.getElementById("referralsBtn").style.display = currentUser.role === "owner" ? "inline-block" : "none";
-        document.getElementById("usersTabBtn").style.display = currentUser.role === "owner" ? "inline-block" : "none";
-        document.getElementById("verificationTabBtn").style.display = currentUser.role === "owner" ? "inline-block" : "none";
-        if (currentUser.role !== "owner" && (currentView === "users" || currentView === "verification")) setView("orders");
+        document.getElementById("usersTabBtn").style.display = isAdminOrOwner ? "inline-block" : "none";
+        document.getElementById("verificationTabBtn").style.display = isAdminOrOwner ? "inline-block" : "none";
+        if (!isAdminOrOwner && (currentView === "users" || currentView === "verification")) setView("orders");
         renderOrders();
     }
 
@@ -2256,11 +2425,15 @@
 
     function generateReferral() {
         if (!currentUser || currentUser.role !== "owner") return;
+        var role = document.getElementById("referralRoleSelect").value;
+        if (role !== "seller" && role !== "admin") role = "seller";
+
         var code = genReferralCode();
         while (referrals.some(function (r) { return r.code === code; })) code = genReferralCode();
 
         referrals.push({
             code: code,
+            role: role,
             createdBy: currentUser.username,
             createdAt: Date.now(),
             used: false,
@@ -2268,7 +2441,7 @@
             usedAt: null
         });
         saveReferrals();
-        showToast("Referral generated: " + code);
+        showToast((role === "admin" ? "Admin" : "Seller") + " referral generated: " + code);
     }
 
     function removeReferral(code) {
@@ -2278,7 +2451,7 @@
         if (!ref) return;
 
         var confirmMsg = ref.used
-            ? "This referral code was used by " + ref.usedBy + ". Removing it will also revoke that seller's panel access. Continue?"
+            ? "This referral code was used by " + ref.usedBy + ". Removing it will also revoke that user's panel access. Continue?"
             : "Remove this referral code?";
         if (!confirm(confirmMsg)) return;
 
@@ -2318,9 +2491,11 @@
         }
 
         el.innerHTML = referrals.slice().reverse().map(function (r) {
+            var role = (r.role === "admin") ? "admin" : "seller";
             return '<div class="referral-item">' +
                 '<span class="referral-code">' + escapeHtml(r.code) + '</span>' +
                 '<span class="referral-item-right">' +
+                    '<span class="referral-role-badge role-' + role + '">' + (role === "admin" ? "Admin" : "Seller") + '</span>' +
                     '<span class="referral-status ' + (r.used ? "used" : "unused") + '">' +
                         (r.used ? "Used by " + escapeHtml(r.usedBy) : "Unused") +
                     '</span>' +
