@@ -985,6 +985,95 @@
         margin-top: 6px;
     }
 
+    .appeals-tab-badge {
+        display: inline-block;
+        background: #c62828;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 16px;
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+        border-radius: 8px;
+        padding: 0 4px;
+        margin-left: 6px;
+        vertical-align: middle;
+    }
+
+    .appeal-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 12px;
+    }
+
+    .appeal-card-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .appeal-card-who {
+        min-width: 0;
+    }
+
+    .appeal-card-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: #222;
+    }
+
+    .appeal-card-email {
+        font-size: 12px;
+        color: #888;
+    }
+
+    .appeal-card-meta {
+        font-size: 11px;
+        color: #aaa;
+        white-space: nowrap;
+    }
+
+    .appeal-card-status {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 20px;
+        margin-top: 4px;
+    }
+
+    .appeal-card-status.currently-banned {
+        background: #fdecea;
+        color: #c0392b;
+    }
+
+    .appeal-card-status.not-banned {
+        background: #eafaf0;
+        color: #1e8449;
+    }
+
+    .appeal-card-message {
+        background: #f9f9f9;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: #444;
+        line-height: 1.6;
+        margin: 12px 0;
+        white-space: pre-wrap;
+    }
+
+    .appeal-card-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
     .ban-modal-target {
         font-weight: 600;
         color: #222;
@@ -1432,6 +1521,7 @@
     <button type="button" class="view-tab" data-view="refunds" onclick="setView('refunds')">Request Refund</button>
     <button type="button" class="view-tab" data-view="users" id="usersTabBtn" style="display:none;" onclick="setView('users')">Users</button>
     <button type="button" class="view-tab" data-view="verification" id="verificationTabBtn" style="display:none;" onclick="setView('verification')">Verification</button>
+    <button type="button" class="view-tab" data-view="appeals" id="appealsTabBtn" style="display:none;" onclick="setView('appeals')">Appeals<span class="appeals-tab-badge" id="appealsTabBadge" style="display:none;"></span></button>
 </div>
 
 <div class="filters" id="ordersFilters">
@@ -1475,6 +1565,10 @@
         <h3 class="verification-banned-heading">Suspended / Banned Emails</h3>
         <div id="bannedList"></div>
     </div>
+</div>
+
+<div class="container" id="appealsContainer" style="display:none;">
+    <div id="appealsList"></div>
 </div>
 
 </div>
@@ -1568,6 +1662,7 @@
     var USERS_DOC = db.collection("athletica").doc("orderManageAccounts");
     var REFERRALS_DOC = db.collection("athletica").doc("referrals");
     var BANNED_DOC = db.collection("athletica").doc("bannedAccounts");
+    var APPEALS_DOC = db.collection("athletica").doc("accountAppeals");
     var OWNER_EMAIL = "owner@athletica.com";
 
     var usersMap = {};
@@ -1608,7 +1703,7 @@
     }
 
     function setView(view) {
-        if ((view === "users" || view === "verification") && (!currentUser || (currentUser.role !== "owner" && currentUser.role !== "admin"))) return;
+        if ((view === "users" || view === "verification" || view === "appeals") && (!currentUser || (currentUser.role !== "owner" && currentUser.role !== "admin"))) return;
 
         currentView = view;
         document.querySelectorAll(".view-tab").forEach(function (b) {
@@ -1620,10 +1715,12 @@
         document.getElementById("refundsContainer").style.display = view === "refunds" ? "block" : "none";
         document.getElementById("usersContainer").style.display = view === "users" ? "block" : "none";
         document.getElementById("verificationContainer").style.display = view === "verification" ? "block" : "none";
+        document.getElementById("appealsContainer").style.display = view === "appeals" ? "block" : "none";
         if (view === "products") renderProducts();
         if (view === "refunds") renderRefunds();
         if (view === "users") renderUsers();
         if (view === "verification") renderVerification();
+        if (view === "appeals") renderAppeals();
     }
 
     var usersSearchQuery = "";
@@ -1933,6 +2030,77 @@
         }).catch(function (err) {
             console.error("unban error", err);
             showToast("Couldn't unban right now. Please try again.");
+        });
+    }
+
+    function renderAppeals() {
+        var listEl = document.getElementById("appealsList");
+        if (!listEl) return;
+
+        if (accountAppeals.length === 0) {
+            listEl.innerHTML = '<div class="empty-state">No appeals submitted yet.</div>';
+            return;
+        }
+
+        var sorted = accountAppeals.slice().reverse();
+        listEl.innerHTML = sorted.map(function (a) {
+            var stillBanned = isBannedEmail(a.email);
+            var when = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : "";
+            var statusHtml = stillBanned
+                ? '<span class="appeal-card-status currently-banned">Still Banned</span>'
+                : '<span class="appeal-card-status not-banned">Not Banned</span>';
+
+            var dismissBtn = '<button type="button" class="btn-neutral" onclick="dismissAppeal(\'' +
+                escapeHtml(a.email || "") + '\', \'' + escapeHtml(a.submittedAt || "") + '\')">' +
+                (stillBanned ? 'Dismiss' : 'Remove from list') + '</button>';
+
+            var actionsHtml = stillBanned
+                ? '<button type="button" class="btn-unban" onclick="approveAppeal(\'' + escapeHtml(a.email || "") + '\')">Unban (Approve Appeal)</button>' + dismissBtn
+                : dismissBtn;
+
+            return '<div class="appeal-card">' +
+                '<div class="appeal-card-top">' +
+                    '<div class="appeal-card-who">' +
+                        '<div class="appeal-card-name">' + escapeHtml(a.name || a.email || "Unknown") + '</div>' +
+                        '<div class="appeal-card-email">' + escapeHtml(a.email || "") + '</div>' +
+                        statusHtml +
+                    '</div>' +
+                    (when ? '<div class="appeal-card-meta">' + escapeHtml(when) + '</div>' : '') +
+                '</div>' +
+                '<div class="appeal-card-message">' + escapeHtml(a.message || "(no message)") + '</div>' +
+                '<div class="appeal-card-actions">' +
+                    '<button type="button" class="btn-view-photo" onclick="viewVerificationPhoto(\'' + escapeHtml(a.email || "") + '\', \'idImage\')">View ID</button>' +
+                    '<button type="button" class="btn-view-photo" onclick="viewVerificationPhoto(\'' + escapeHtml(a.email || "") + '\', \'selfieImage\')">View Selfie</button>' +
+                    actionsHtml +
+                '</div>' +
+            '</div>';
+        }).join("");
+    }
+
+    function approveAppeal(email) {
+        if (!email) return;
+        if (!confirm("Unban " + email + " and approve this appeal?")) return;
+
+        var updated = bannedAccounts.filter(function (b) { return (b.email || "").toLowerCase() !== email.toLowerCase(); });
+
+        BANNED_DOC.set({ list: updated }).then(function () {
+            showToast("Unbanned — appeal approved.");
+        }).catch(function (err) {
+            console.error("approve appeal error", err);
+            showToast("Couldn't unban right now. Please try again.");
+        });
+    }
+
+    function dismissAppeal(email, submittedAt) {
+        var updated = accountAppeals.filter(function (a) {
+            return !((a.email || "") === email && (a.submittedAt || "") === submittedAt);
+        });
+
+        APPEALS_DOC.set({ list: updated }).then(function () {
+            showToast("Appeal dismissed.");
+        }).catch(function (err) {
+            console.error("dismiss appeal error", err);
+            showToast("Couldn't dismiss right now. Please try again.");
         });
     }
 
@@ -2335,7 +2503,34 @@
         bannedAccounts = (doc.exists && doc.data().list) ? doc.data().list : [];
         _bannedAccountsReady = true;
         if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "verification") renderVerification();
+        if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "appeals") renderAppeals();
     }, function (err) { console.error("bannedAccounts sync error", err); });
+
+    // User-submitted appeals from the site's "Appeal This Suspension" flow
+    // — { list: [ { email, name, message, submittedAt, status } ] }.
+    // Written by the site (index.html) when someone submits an appeal;
+    // written here only when the admin dismisses/resolves one.
+    var accountAppeals = [];
+    var _accountAppealsReady = false;
+
+    APPEALS_DOC.onSnapshot(function (doc) {
+        accountAppeals = (doc.exists && doc.data().list) ? doc.data().list : [];
+        _accountAppealsReady = true;
+        updateAppealsTabBadge();
+        if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "appeals") renderAppeals();
+    }, function (err) { console.error("accountAppeals sync error", err); });
+
+    function updateAppealsTabBadge() {
+        var badge = document.getElementById("appealsTabBadge");
+        if (!badge) return;
+        var pending = accountAppeals.filter(function (a) { return (a.status || "pending") === "pending"; }).length;
+        if (pending > 0) {
+            badge.textContent = pending;
+            badge.style.display = "inline-block";
+        } else {
+            badge.style.display = "none";
+        }
+    }
 
     // ---- Auth logic ----
 
@@ -2530,7 +2725,9 @@
         document.getElementById("referralsBtn").style.display = currentUser.role === "owner" ? "inline-block" : "none";
         document.getElementById("usersTabBtn").style.display = isAdminOrOwner ? "inline-block" : "none";
         document.getElementById("verificationTabBtn").style.display = isAdminOrOwner ? "inline-block" : "none";
-        if (!isAdminOrOwner && (currentView === "users" || currentView === "verification")) setView("orders");
+        document.getElementById("appealsTabBtn").style.display = isAdminOrOwner ? "inline-block" : "none";
+        if (!isAdminOrOwner && (currentView === "users" || currentView === "verification" || currentView === "appeals")) setView("orders");
+        updateAppealsTabBadge();
         renderOrders();
     }
 
