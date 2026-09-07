@@ -1694,6 +1694,38 @@
         return bannedAccounts.some(function (b) { return (b.email || "").toLowerCase() === email; });
     }
 
+    // Manually mark a not-yet-AI-verified account as verified. Unlike the
+    // rest of this file, this DOES write to athletica/users — the AI check
+    // only runs at sign-up time, so approving someone after the fact has
+    // no other path than updating their idVerified flag directly. We
+    // re-fetch the doc fresh right before writing (rather than trusting
+    // the possibly-stale local siteUsers cache) to avoid clobbering a
+    // concurrent update from the site.
+    function approveVerification(email) {
+        if (!email) return;
+        if (!confirm("Manually approve verification for " + email + "?")) return;
+
+        var usersDocRef = db.collection("athletica").doc("users");
+        usersDocRef.get().then(function (doc) {
+            var list = (doc.exists && doc.data().list) ? doc.data().list : [];
+            var idx = -1;
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].email === email) { idx = i; break; }
+            }
+            if (idx === -1) {
+                showToast("User not found.");
+                return null;
+            }
+            list[idx] = Object.assign({}, list[idx], { idVerified: true });
+            return usersDocRef.set({ list: list });
+        }).then(function (result) {
+            if (result !== null) showToast("Verification approved.");
+        }).catch(function (err) {
+            console.error("approve verification error", err);
+            showToast("Couldn't approve right now. Please try again.");
+        });
+    }
+
     function viewVerificationPhoto(email, kind) {
         if (!email) return;
         showToast("Loading photo...");
@@ -1777,6 +1809,11 @@
                     ? '<span class="verify-status-badge yes"><i class="fa-solid fa-circle-check"></i> Verified</span>'
                     : '<span class="verify-status-badge no"><i class="fa-solid fa-circle-xmark"></i> Not Verified</span>';
 
+                var actionButtonsHtml = u.idVerified
+                    ? '<button type="button" class="btn-ban" onclick="openBanModal(\'' + escapeHtml(u.email || "") + '\', \'' + escapeHtml(name) + '\')">Remove &amp; Ban</button>'
+                    : '<button type="button" class="btn-approve" onclick="approveVerification(\'' + escapeHtml(u.email || "") + '\')">Approve</button>' +
+                      '<button type="button" class="btn-ban" onclick="openBanModal(\'' + escapeHtml(u.email || "") + '\', \'' + escapeHtml(name) + '\')">Remove</button>';
+
                 return '<div class="user-card">' +
                     avatarHtml +
                     '<div class="user-card-info">' +
@@ -1789,7 +1826,7 @@
                         verifiedHtml +
                         '<button type="button" class="btn-view-photo" onclick="viewVerificationPhoto(\'' + escapeHtml(u.email || "") + '\', \'idImage\')">View ID</button>' +
                         '<button type="button" class="btn-view-photo" onclick="viewVerificationPhoto(\'' + escapeHtml(u.email || "") + '\', \'selfieImage\')">View Selfie</button>' +
-                        '<button type="button" class="btn-ban" onclick="openBanModal(\'' + escapeHtml(u.email || "") + '\', \'' + escapeHtml(name) + '\')">Remove &amp; Ban</button>' +
+                        actionButtonsHtml +
                     '</div>' +
                 '</div>';
             }).join("");
