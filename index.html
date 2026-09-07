@@ -679,6 +679,40 @@
         border-bottom-color: #145A32;
     }
 
+    .verification-filter-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .verification-filter-btn {
+        border: 1px solid #ddd;
+        background: #fff;
+        color: #555;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 7px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+    }
+
+    .verification-filter-btn:hover {
+        background: #f5f5f5;
+    }
+
+    .verification-filter-btn.active {
+        background: #145A32;
+        border-color: #145A32;
+        color: #fff;
+    }
+
+    .verification-filter-btn .count {
+        opacity: 0.75;
+        font-weight: 500;
+        margin-left: 3px;
+    }
+
     /* ---- Users view ---- */
     .users-search-wrap {
         margin-bottom: 16px;
@@ -1411,6 +1445,11 @@
 </div>
 
 <div class="container" id="verificationContainer" style="display:none;">
+    <div class="verification-filter-tabs" id="verificationFilterTabs">
+        <button type="button" class="verification-filter-btn active" data-filter="all" onclick="setVerificationFilter('all')">All <span class="count" id="verificationCountAll"></span></button>
+        <button type="button" class="verification-filter-btn" data-filter="verified" onclick="setVerificationFilter('verified')">Verified <span class="count" id="verificationCountVerified"></span></button>
+        <button type="button" class="verification-filter-btn" data-filter="unverified" onclick="setVerificationFilter('unverified')">Not Verified <span class="count" id="verificationCountUnverified"></span></button>
+    </div>
     <div class="users-search-wrap">
         <input type="text" id="verificationSearchInput" class="users-search-input" placeholder="Search verified users by name, username, or email…" oninput="handleVerificationSearch(this.value)">
     </div>
@@ -1635,9 +1674,18 @@
     }
 
     var verificationSearchQuery = "";
+    var verificationFilter = "all"; // "all" | "verified" | "unverified"
 
     function handleVerificationSearch(val) {
         verificationSearchQuery = (val || "").trim().toLowerCase();
+        renderVerification();
+    }
+
+    function setVerificationFilter(filter) {
+        verificationFilter = filter;
+        document.querySelectorAll(".verification-filter-btn").forEach(function (b) {
+            b.classList.toggle("active", b.getAttribute("data-filter") === filter);
+        });
         renderVerification();
     }
 
@@ -1675,10 +1723,28 @@
         if (!listEl || !bannedEl) return;
 
         // Active (non-banned) users — this is the "who has verified" view.
-        var entries = siteUsers.filter(function (u) {
+        var baseEntries = siteUsers.filter(function (u) {
             var isOwner = u.isOwner || u.email === OWNER_EMAIL;
             return !isOwner && !isBannedEmail(u.email);
         });
+
+        var countAll = baseEntries.length;
+        var countVerified = baseEntries.filter(function (u) { return !!u.idVerified; }).length;
+        var countUnverified = countAll - countVerified;
+
+        var countAllEl = document.getElementById("verificationCountAll");
+        var countVerifiedEl = document.getElementById("verificationCountVerified");
+        var countUnverifiedEl = document.getElementById("verificationCountUnverified");
+        if (countAllEl) countAllEl.textContent = countAll;
+        if (countVerifiedEl) countVerifiedEl.textContent = countVerified;
+        if (countUnverifiedEl) countUnverifiedEl.textContent = countUnverified;
+
+        var entries = baseEntries;
+        if (verificationFilter === "verified") {
+            entries = entries.filter(function (u) { return !!u.idVerified; });
+        } else if (verificationFilter === "unverified") {
+            entries = entries.filter(function (u) { return !u.idVerified; });
+        }
 
         if (verificationSearchQuery) {
             entries = entries.filter(function (u) {
