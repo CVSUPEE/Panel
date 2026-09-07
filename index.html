@@ -883,6 +883,23 @@
         white-space: nowrap;
     }
 
+    .btn-approve-verify {
+        background: #145A32;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 7px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-approve-verify:hover {
+        background: #0d3d22;
+    }
+
     .btn-ban:hover {
         background: #ffebee;
     }
@@ -1811,7 +1828,7 @@
 
                 var actionButtonsHtml = u.idVerified
                     ? '<button type="button" class="btn-ban" onclick="openBanModal(\'' + escapeHtml(u.email || "") + '\', \'' + escapeHtml(name) + '\')">Remove &amp; Ban</button>'
-                    : '<button type="button" class="btn-approve" onclick="approveVerification(\'' + escapeHtml(u.email || "") + '\')">Approve</button>' +
+                    : '<button type="button" class="btn-approve-verify" onclick="approveVerification(\'' + escapeHtml(u.email || "") + '\')">Approve</button>' +
                       '<button type="button" class="btn-ban" onclick="openBanModal(\'' + escapeHtml(u.email || "") + '\', \'' + escapeHtml(name) + '\')">Remove</button>';
 
                 return '<div class="user-card">' +
