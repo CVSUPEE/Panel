@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Athletica — Admin/Seller Panel</title>
+<title>CVSPEE — Admin/Seller Panel</title>
 <style>
     * { box-sizing: border-box; }
 
@@ -1475,8 +1475,8 @@
 
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-box">
-        <h2>Athletica <span>Admin/Seller Panel</span></h2>
-        <p class="auth-subtitle" id="authSubtitle">Log in with your Athletica account.</p>
+        <h2>CVSPEE <span>Admin/Seller Panel</span></h2>
+        <p class="auth-subtitle" id="authSubtitle">Log in with your CVSPEE account.</p>
 
         <form id="loginForm" class="auth-form" onsubmit="return handleLogin(event)">
             <input type="text" id="loginUsername" placeholder="Username or Email" autocomplete="username" required>
@@ -1505,7 +1505,7 @@
 <div id="appRoot" style="display:none">
 
 <div class="topbar">
-    <h1>Athletica <span>Admin/Seller Panel</span></h1>
+    <h1>CVSPEE <span>Admin/Seller Panel</span></h1>
     <div class="topbar-actions">
         <a href="https://cvsupee.github.io/Shop/" class="back-to-shop-btn">&larr; Back to Shop</a>
         <span class="conn-status" id="connStatus">Connecting…</span>
@@ -1652,18 +1652,18 @@
 
     // ---- Auth / referral state ----
     // Login credentials now come from the real website account (index.html's
-    // athletica/users doc, shape { list: [...] } — read via the siteUsers
+    // cvspee/users doc, shape { list: [...] } — read via the siteUsers
     // listener below). This "orderManageAccounts" doc no longer stores any
     // passwords; it just tracks which site accounts (keyed by email) have
     // been granted seller access in this panel, plus which referral code
     // they used. IMPORTANT: keep this on its own doc — never point it at
-    // athletica/users itself, or a full overwrite here would wipe out every
+    // cvspee/users itself, or a full overwrite here would wipe out every
     // registered shop account.
-    var USERS_DOC = db.collection("athletica").doc("orderManageAccounts");
-    var REFERRALS_DOC = db.collection("athletica").doc("referrals");
-    var BANNED_DOC = db.collection("athletica").doc("bannedAccounts");
-    var APPEALS_DOC = db.collection("athletica").doc("accountAppeals");
-    var OWNER_EMAIL = "owner@athletica.com";
+    var USERS_DOC = db.collection("cvspee").doc("orderManageAccounts");
+    var REFERRALS_DOC = db.collection("cvspee").doc("referrals");
+    var BANNED_DOC = db.collection("cvspee").doc("bannedAccounts");
+    var APPEALS_DOC = db.collection("cvspee").doc("accountAppeals");
+    var OWNER_EMAIL = "cvspeeowner@gmail.com";
 
     var usersMap = {};
     var referrals = [];
@@ -1809,7 +1809,7 @@
     }
 
     // Manually mark a not-yet-AI-verified account as verified. Unlike the
-    // rest of this file, this DOES write to athletica/users — the AI check
+    // rest of this file, this DOES write to cvspee/users — the AI check
     // only runs at sign-up time, so approving someone after the fact has
     // no other path than updating their idVerified flag directly. We
     // re-fetch the doc fresh right before writing (rather than trusting
@@ -1819,7 +1819,7 @@
         if (!email) return;
         if (!confirm("Manually approve verification for " + email + "?")) return;
 
-        var usersDocRef = db.collection("athletica").doc("users");
+        var usersDocRef = db.collection("cvspee").doc("users");
         usersDocRef.get().then(function (doc) {
             var list = (doc.exists && doc.data().list) ? doc.data().list : [];
             var idx = -1;
@@ -1843,7 +1843,7 @@
     function viewVerificationPhoto(email, kind) {
         if (!email) return;
         showToast("Loading photo...");
-        db.collection("athletica").doc("idPhotosRoot").collection("byEmail").doc(email).get()
+        db.collection("cvspee").doc("idPhotosRoot").collection("byEmail").doc(email).get()
             .then(function (doc) {
                 if (!doc.exists) {
                     showToast("No photo on file for this user.");
@@ -2291,7 +2291,7 @@
     }
 
     function saveOrders() {
-        db.collection("athletica").doc("orders").set({ list: orders }).catch(function (err) {
+        db.collection("cvspee").doc("orders").set({ list: orders }).catch(function (err) {
             console.error("Failed to save orders", err);
             showToast("Failed to save — check connection and try again.");
         });
@@ -2307,7 +2307,7 @@
             changed = true;
         });
         if (changed) {
-            db.collection("athletica").doc("products").set({ map: products });
+            db.collection("cvspee").doc("products").set({ map: products });
         }
     }
 
@@ -2454,7 +2454,7 @@
         }).join("");
     }
 
-    db.collection("athletica").doc("orders").onSnapshot(function (doc) {
+    db.collection("cvspee").doc("orders").onSnapshot(function (doc) {
         orders = (doc.exists && doc.data().list) ? doc.data().list : [];
         document.getElementById("connStatus").textContent = "Live";
         document.getElementById("connStatus").classList.add("online");
@@ -2465,26 +2465,26 @@
         document.getElementById("connStatus").textContent = "Connection error";
     });
 
-    db.collection("athletica").doc("products").onSnapshot(function (doc) {
+    db.collection("cvspee").doc("products").onSnapshot(function (doc) {
         products = (doc.exists && doc.data().map) ? doc.data().map : {};
         if (currentView === "products") renderProducts();
     }, function (err) { console.error("products sync error", err); });
 
-    db.collection("athletica").doc("reviews").onSnapshot(function (doc) {
+    db.collection("cvspee").doc("reviews").onSnapshot(function (doc) {
         productReviews = (doc.exists && doc.data().map) ? doc.data().map : {};
         if (currentView === "products") renderProducts();
     }, function (err) { console.error("reviews sync error", err); });
 
-    db.collection("athletica").doc("comments").onSnapshot(function (doc) {
+    db.collection("cvspee").doc("comments").onSnapshot(function (doc) {
         productComments = (doc.exists && doc.data().map) ? doc.data().map : {};
         if (currentView === "products") renderProducts();
     }, function (err) { console.error("comments sync error", err); });
 
     // Read-only view of the shop's actual customer accounts (index.html's
-    // athletica/users doc, shape { list: [...] }). This is also the source
+    // cvspee/users doc, shape { list: [...] }). This is also the source
     // of login credentials for this panel now — see handleLogin() below.
     // Never write to this collection from here.
-    db.collection("athletica").doc("users").onSnapshot(function (doc) {
+    db.collection("cvspee").doc("users").onSnapshot(function (doc) {
         siteUsers = (doc.exists && doc.data().list) ? doc.data().list : [];
         _siteUsersReady = true;
         restoreSession();
@@ -2494,7 +2494,7 @@
 
     // Owner-managed list of banned/suspended emails — { list: [ { email,
     // reason, name, bannedAt, bannedBy } ] }. This one IS writable from
-    // the panel (unlike athletica/users above), since banning only adds
+    // the panel (unlike cvspee/users above), since banning only adds
     // an entry here rather than mutating the shared user list.
     var bannedAccounts = [];
     var _bannedAccountsReady = false;
@@ -2590,7 +2590,7 @@
         document.getElementById("referralForm").style.display = "none";
         document.getElementById("loginForm").style.display = "flex";
         document.getElementById("backToShopLink").style.display = "block";
-        document.getElementById("authSubtitle").textContent = "Log in with your Athletica account.";
+        document.getElementById("authSubtitle").textContent = "Log in with your CVSPEE account.";
         document.getElementById("loginError").textContent = "";
     }
 
@@ -2675,20 +2675,20 @@
             name: siteUser.name || siteUser.username || siteUser.email,
             role: role
         };
-        localStorage.setItem("athletica_session", JSON.stringify({ email: siteUser.email }));
+        localStorage.setItem("cvspee_session", JSON.stringify({ email: siteUser.email }));
         showApp();
     }
 
     function restoreSession() {
         if (currentUser) return; // already logged in this session
         if (!_usersMapReady || !_siteUsersReady) return; // wait for both sources
-        var raw = localStorage.getItem("athletica_session");
+        var raw = localStorage.getItem("cvspee_session");
         if (!raw) return;
         try {
             var saved = JSON.parse(raw);
             var siteUser = siteUsers.find(function (u) { return u.email === saved.email; });
             if (!siteUser) {
-                localStorage.removeItem("athletica_session");
+                localStorage.removeItem("cvspee_session");
                 return;
             }
             if (siteUser.isOwner || siteUser.email === OWNER_EMAIL) {
@@ -2701,16 +2701,16 @@
                 currentUser = { email: siteUser.email, username: siteUser.username || "", name: record.name || siteUser.name || siteUser.email, role: record.role };
                 showApp();
             } else {
-                localStorage.removeItem("athletica_session");
+                localStorage.removeItem("cvspee_session");
             }
         } catch (e) {
-            localStorage.removeItem("athletica_session");
+            localStorage.removeItem("cvspee_session");
         }
     }
 
     function logout() {
         currentUser = null;
-        localStorage.removeItem("athletica_session");
+        localStorage.removeItem("cvspee_session");
         document.getElementById("appRoot").style.display = "none";
         document.getElementById("authOverlay").classList.remove("hidden");
         document.getElementById("loginForm").reset();
