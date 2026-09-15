@@ -2436,10 +2436,11 @@
                 : "";
 
             var detailsHtml = "";
-            if (o.method === "COD") {
-                detailsHtml = '<div class="order-meta">' + codDetailsHtml(o.details) + '</div>';
-            } else if (o.details && o.details.paymentProof) {
-                detailsHtml =
+            if (o.details && (o.details.name || o.details.lat != null)) {
+                detailsHtml += '<div class="order-meta">' + codDetailsHtml(o.details) + '</div>';
+            }
+            if (o.details && o.details.paymentProof) {
+                detailsHtml +=
                     '<div class="order-meta"><strong>Payment Proof:</strong></div>' +
                     '<img src="' + o.details.paymentProof + '" class="proof-img" onclick="openImgOverlay(\'' + o.details.paymentProof.replace(/'/g, "\\'") + '\')" alt="Payment proof">';
             }
