@@ -291,6 +291,26 @@
         border: 1px solid #eee;
     }
 
+    .order-map-frame {
+        width: 100%;
+        max-width: 320px;
+        height: 160px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        margin-top: 6px;
+    }
+
+    .order-map-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        font-size: 13px;
+        font-weight: bold;
+        color: #1F3A2E;
+        text-decoration: underline;
+    }
+
     .order-actions {
         margin-top: 14px;
         display: flex;
@@ -1687,6 +1707,31 @@
         }).join(", ");
     }
 
+    function codDetailsHtml(details) {
+        details = details || {};
+        var html = "";
+
+        html += '<strong>Name:</strong> ' + escapeHtml(details.name) + '<br>';
+        html += '<strong>Phone:</strong> ' + escapeHtml(details.phone) + '<br>';
+
+        if (details.lat != null && details.lng != null) {
+            var lat = details.lat, lng = details.lng;
+            var mapsUrl = "https://www.google.com/maps?q=" + lat + "," + lng;
+            var d = 0.004;
+            var embedSrc = "https://www.openstreetmap.org/export/embed.html?bbox=" +
+                (lng - d) + "," + (lat - d * 0.6) + "," + (lng + d) + "," + (lat + d * 0.6) +
+                "&layer=mapnik&marker=" + lat + "," + lng;
+
+            html += '<strong>Delivery Location:</strong> ' + escapeHtml(details.address || (lat.toFixed(5) + ", " + lng.toFixed(5))) + '<br>';
+            html += '<iframe class="order-map-frame" src="' + embedSrc + '" loading="lazy"></iframe><br>';
+            html += '<a href="' + mapsUrl + '" target="_blank" rel="noopener" class="order-map-link">📍 Open in Google Maps</a>';
+        } else if (details.address) {
+            html += '<strong>Address:</strong> ' + escapeHtml(details.address);
+        }
+
+        return html;
+    }
+
     function showToast(msg) {
         var el = document.getElementById("toast");
         el.textContent = msg;
@@ -2392,13 +2437,7 @@
 
             var detailsHtml = "";
             if (o.method === "COD") {
-                detailsHtml =
-                    '<div class="order-meta">' +
-                        '<strong>Address:</strong> ' + escapeHtml(o.details && o.details.address) + '<br>' +
-                        '<strong>Year Level:</strong> ' + escapeHtml(o.details && o.details.yearLevel) + '<br>' +
-                        '<strong>Section:</strong> ' + escapeHtml(o.details && o.details.section) + '<br>' +
-                        '<strong>Phone:</strong> ' + escapeHtml(o.details && o.details.phone) +
-                    '</div>';
+                detailsHtml = '<div class="order-meta">' + codDetailsHtml(o.details) + '</div>';
             } else if (o.details && o.details.paymentProof) {
                 detailsHtml =
                     '<div class="order-meta"><strong>Payment Proof:</strong></div>' +
