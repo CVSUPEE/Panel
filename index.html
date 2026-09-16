@@ -2352,7 +2352,11 @@
             });
         }, Promise.resolve()).catch(function (err) {
             console.error("Failed to save orders", err);
-            showToast("Failed to save — check connection and try again.");
+            if (err && err.code === "permission-denied") {
+                showToast("Failed to save: permission-denied. Update Firestore rules for the cvspeeOrders collection.");
+            } else {
+                showToast("Failed to save — check connection and try again.");
+            }
         });
     }
 
