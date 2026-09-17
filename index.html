@@ -7,9 +7,7 @@
 <style>
     * { box-sizing: border-box; }
 
-    /* Hide the browser's own built-in "reveal password" icon (Edge/IE show
-       one natively via ::-ms-reveal) so it doesn't double up with our
-       custom eye toggle button next to each password field. */
+
     input[type="password"]::-ms-reveal,
     input[type="password"]::-ms-clear {
         display: none;
@@ -2512,11 +2510,7 @@
         }).join("");
     }
 
-    // Orders now live one-per-document in "cvspeeOrders" instead of a single
-    // "cvspee/orders" doc with a giant array — the old doc hit Firestore's
-    // 1MB size cap once enough orders (with proof images) piled up, causing
-    // save failures. migrateLegacyOrdersIfNeeded() is idempotent and safe
-    // to run from either the panel or the site, whichever loads first.
+
     migrateLegacyOrdersIfNeeded();
 
     db.collection("cvspeeOrders").orderBy("id").onSnapshot(function (snapshot) {
@@ -2568,10 +2562,7 @@
         if (currentView === "products") renderProducts();
     }, function (err) { console.error("comments sync error", err); });
 
-    // Read-only view of the shop's actual customer accounts (index.html's
-    // cvspee/users doc, shape { list: [...] }). This is also the source
-    // of login credentials for this panel now — see handleLogin() below.
-    // Never write to this collection from here.
+
     db.collection("cvspee").doc("users").onSnapshot(function (doc) {
         siteUsers = (doc.exists && doc.data().list) ? doc.data().list : [];
         _siteUsersReady = true;
@@ -2580,10 +2571,7 @@
         if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "verification") renderVerification();
     }, function (err) { console.error("site users sync error", err); });
 
-    // Owner-managed list of banned/suspended emails — { list: [ { email,
-    // reason, name, bannedAt, bannedBy } ] }. This one IS writable from
-    // the panel (unlike cvspee/users above), since banning only adds
-    // an entry here rather than mutating the shared user list.
+
     var bannedAccounts = [];
     var _bannedAccountsReady = false;
 
@@ -2594,11 +2582,9 @@
         if (currentUser && (currentUser.role === "owner" || currentUser.role === "admin") && currentView === "appeals") renderAppeals();
     }, function (err) { console.error("bannedAccounts sync error", err); });
 
-    // User-submitted appeals from the site's "Appeal This Suspension" flow
-    // — { list: [ { email, name, message, submittedAt, status } ] }.
-    // Written by the site (index.html) when someone submits an appeal;
-    // written here only when the admin dismisses/resolves one.
-    var accountAppeals = [];
+
+
+   var accountAppeals = [];
     var _accountAppealsReady = false;
 
     APPEALS_DOC.onSnapshot(function (doc) {
@@ -2706,8 +2692,7 @@
             return false;
         }
 
-        // Recognized shop account, but not registered as a seller in this
-        // panel yet — ask for the referral code before letting them in.
+
         showReferralStep(siteUser);
         return false;
     }
